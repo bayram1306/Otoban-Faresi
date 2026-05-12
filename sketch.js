@@ -11,7 +11,7 @@ var magPower = 600, autoPower = 600;
 var hasExtraLife = false; 
 
 function setup() {
-  createCanvas(400, 600);
+  createCanvas(windowWidth,windowHeight);
   pX = 200;
 }
 
