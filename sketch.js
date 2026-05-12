@@ -29,20 +29,17 @@ function draw() {
 }
 
 function drawEnvironment() {
-  // Çimler
   fill(34, 139, 34);
   rect(0, 0, width * 0.1, height); 
   rect(width * 0.9, 0, width * 0.1, height);
   
-  // Yol
   fill(50, 50, 50);
   let roadWidth = width * 0.8;
   let roadX = width * 0.1;
   rect(roadX, 0, roadWidth, height); 
 
-  // Kesik Yol Çizgileri
   stroke(255, 40); 
-  strokeWeight(width * 0.01);
+  strokeWeight(width * 0.015);
   let lOff = (frameCount * spd) % 60;
   for (let y = -60; y < height; y += 60) {
     line(roadX + roadWidth * 0.33, y + lOff, roadX + roadWidth * 0.33, y + lOff + 30);
@@ -56,6 +53,7 @@ function runGame() {
   let currentProgress = coinsCount - 1;
   let roadWidth = width * 0.8;
   let roadX = width * 0.1;
+  let objSize = width * 0.12;
 
   if (autoT > 0) {
     autoT--;
@@ -77,30 +75,32 @@ function runGame() {
     lane = bestL;
   }
 
-  pX = lerp(pX, roadX + (lane * (roadWidth / 3)) + (roadWidth / 6) - 25, 0.35);
+  // Araba Genişliği ve Pozisyonu
+  let carW = width * 0.18;
+  pX = lerp(pX, roadX + (lane * (roadWidth / 3)) + (roadWidth / 6) - (carW / 2), 0.35);
   if (magT > 0) magT--;
 
   let spawnRate = max(10, 45 - (level * 2));
   if (frameCount % spawnRate === 0 && !finishLine) {
     let l = floor(random(3));
-    let x = roadX + (l * (roadWidth / 3)) + (roadWidth / 6) - 20;
+    let x = roadX + (l * (roadWidth / 3)) + (roadWidth / 6) - (objSize / 2);
     
     if (currentProgress >= currentTarget) {
       finishLine = { y: -100 };
     } else if (!magSpawned && currentProgress >= floor(currentTarget / 3)) {
-      mags.push({x: x, y: -50});
+      mags.push({x: x, y: -100});
       magSpawned = true;
     } else if (!autoSpawned && currentProgress >= floor(currentTarget / 2)) {
-      gCoins.push({x: x, y: -50});
+      gCoins.push({x: x, y: -100});
       autoSpawned = true;
     } else {
       let r = random();
       if (r < 0.35) {
         let cols = ["#FF0000", "#9400D3", "#8B4513"];
-        mons.push({x: x, y: -50, col: random(cols)}); 
+        mons.push({x: x, y: -100, col: random(cols)}); 
       }
-      else if (r < 0.55) obs.push({x:x, y:-50});
-      else cns.push({x:x, y:-50});
+      else if (r < 0.55) obs.push({x:x, y:-100});
+      else cns.push({x:x, y:-100});
     }
   }
 
@@ -113,22 +113,25 @@ function runGame() {
   handle(cns, "GOLD"); handle(gCoins, "GREEN"); handle(mags, "MAG");
   handle(obs, "RED"); handle(mons, "MONSTER"); 
 
-  drawDetailedCar(pX, height - 150);
+  drawDetailedCar(pX, height - 180);
   drawUI(currentTarget, currentProgress);
 }
 
 function handle(list, type) {
+  let carW = width * 0.18;
+  let carH = carW * 1.7;
   for (let i = list.length - 1; i >= 0; i--) {
     list[i].y += spd;
     if (type === "GOLD" && magT > 0) {
-      let d = dist(list[i].x, list[i].y, pX, height - 150);
-      if (d < 180) { list[i].x = lerp(list[i].x, pX + 5, 0.2); list[i].y = lerp(list[i].y, height - 140, 0.2); }
+      let d = dist(list[i].x, list[i].y, pX, height - 180);
+      if (d < 250) { list[i].x = lerp(list[i].x, pX, 0.2); list[i].y = lerp(list[i].y, height - 160, 0.2); }
     }
     
     let col = (type === "MONSTER") ? (list[i].col || "#9400D3") : null;
     drawAsset(list[i].x, list[i].y, type, col);
     
-    if (dist(list[i].x+20, list[i].y+20, pX+25, height-110) < 45) {
+    // Çarpışma mesafesi büyütüldü
+    if (dist(list[i].x + (width*0.06), list[i].y + (width*0.06), pX + carW/2, height - 140) < carW*0.8) {
       if (type === "GOLD") { score += 10; currentSessionGold += 10; coinsCount++; sound(1000, 0.3); list.splice(i, 1); }
       else if (type === "MAG") { magT = magPower; sound(800, 0.3); list.splice(i, 1); }
       else if (type === "GREEN") { autoT = autoPower; sound(1200, 0.3); list.splice(i, 1); }
@@ -141,42 +144,42 @@ function handle(list, type) {
 }
 
 function drawUI(target, progress) {
-  fill(0, 150); rect(10, 10, 160, 85, 10);
-  fill(255); textAlign(LEFT); textSize(12);
+  fill(0, 150); rect(10, 10, width * 0.4, 85, 10);
+  fill(255); textAlign(LEFT); textSize(width * 0.035);
   text("BÖLÜM: " + level, 20, 30); 
   fill(255, 215, 0); text("HEDEF: " + target, 20, 52);
   fill(0, 255, 100); text("ALINAN: " + progress, 20, 74);
-  
-  if (magT > 0) { fill(0, 255, 255); text("🧲 " + ceil(magT/60) + "s", 20, 115); }
-  if (autoT > 0) { fill(0, 255, 100); text("🤖 " + ceil(autoT/60) + "s", 95, 115); }
 }
 
 function drawAsset(x, y, type, col) { 
   push(); 
-  translate(x + 20, y + 20); 
+  let objSize = width * 0.12; 
+  translate(x + objSize/2, y + objSize/2); 
   if (type === "GOLD") { 
-    fill(255, 215, 0); ellipse(0, 0, 25, 25); fill(0); textAlign(CENTER, CENTER); text("$", 0, 2); 
+    fill(255, 215, 0); ellipse(0, 0, objSize, objSize); fill(0); textAlign(CENTER, CENTER); textSize(objSize*0.6); text("$", 0, 0); 
   } else if (type === "MAG") { 
-    stroke(255, 0, 0); strokeWeight(6); noFill(); arc(0, 0, 24, 24, PI, 0); 
+    stroke(255, 0, 0); strokeWeight(objSize*0.2); noFill(); arc(0, 0, objSize*0.8, objSize*0.8, PI, 0); 
   } else if (type === "GREEN") { 
-    fill(0, 255, 100); ellipse(0, 0, 30, 30); fill(255); textSize(10); textAlign(CENTER); text("AUTO", 0, 5); 
+    fill(0, 255, 100); ellipse(0, 0, objSize, objSize); fill(255); textSize(objSize*0.3); textAlign(CENTER); text("AUTO", 0, objSize*0.1); 
   } else if (type === "RED") {
-    fill(200, 0, 0); rect(-15, -15, 30, 30, 5);
+    fill(200, 0, 0); rect(-objSize/2, -objSize/2, objSize, objSize, 5);
   } else if (type === "MONSTER") { 
     fill(col); stroke(0); strokeWeight(2);
-    ellipse(0, 0, 42, 42);
-    fill(255); ellipse(-10, -5, 10, 10); ellipse(10, -5, 10, 10);
-    fill(0); ellipse(-10, -5, 4); ellipse(10, -5, 4);
+    ellipse(0, 0, objSize, objSize);
+    fill(255); ellipse(-objSize*0.2, -objSize*0.1, objSize*0.3, objSize*0.3); ellipse(objSize*0.2, -objSize*0.1, objSize*0.3, objSize*0.3);
+    fill(0); ellipse(-objSize*0.2, -objSize*0.1, objSize*0.1); ellipse(objSize*0.2, -objSize*0.1, objSize*0.1);
   } 
   pop(); 
 }
 
 function drawDetailedCar(x, y) {
   push();
-  fill(carColor); rect(x, y, 50, 85, 8);
-  fill(40, 120, 200, 220); rect(x+5, y+10, 40, 18, 2);
-  fill(255, 255, 200); ellipse(x+10, y+5, 12, 6); ellipse(x+40, y+5, 12, 6);
-  if (hasExtraLife) { noFill(); stroke(255, 0, 0); strokeWeight(3); ellipse(x+25, y+42, 70); }
+  let carW = width * 0.18;
+  let carH = carW * 1.7;
+  fill(carColor); rect(x, y, carW, carH, 10);
+  fill(40, 120, 200, 220); rect(x + carW*0.1, y + carH*0.15, carW*0.8, carH*0.25, 2);
+  fill(255, 255, 200); ellipse(x + carW*0.25, y + 8, carW*0.25, 12); ellipse(x + carW*0.75, y + 8, carW*0.25, 12);
+  if (hasExtraLife) { noFill(); stroke(255, 0, 0); strokeWeight(4); ellipse(x + carW/2, y + carH/2, carW*1.5); }
   pop();
 }
 
@@ -186,25 +189,25 @@ function gameOver() { if (score > highScore) highScore = score; state = "MENU"; 
 function drawMainMenu() { 
   fill(0, 180); rect(width*0.1, height*0.1, width*0.8, height*0.8, 30); 
   fill(255); textAlign(CENTER); textSize(width*0.08); text("OTOBAN FARESİ", width/2, height*0.2); 
-  fill(255, 215, 0); textSize(20); text("KASA: " + totalGold + " $", width/2, height*0.25); 
-  drawMenuButton(showNextLevel ? "SIRADAKİ BÖLÜM" : "GAZA BAS", height*0.4); 
-  drawMenuButton("MARKET", height*0.5); 
-  drawMenuButton("REKORLAR", height*0.6); 
+  fill(255, 215, 0); textSize(width*0.05); text("KASA: " + totalGold + " $", width/2, height*0.28); 
+  drawMenuButton(showNextLevel ? "SIRADAKİ BÖLÜM" : "GAZA BAS", height*0.45); 
+  drawMenuButton("MARKET", height*0.55); 
+  drawMenuButton("REKORLAR", height*0.65); 
 }
 
 function drawMenuButton(label, y) { 
-  let h = mouseIn(width*0.2, width*0.8, y-25, y+25); 
+  let h = mouseIn(width*0.2, width*0.8, y-30, y+30); 
   fill(h ? 255 : 200, 100); 
-  rect(width*0.2, y-25, width*0.6, 50, 10); 
-  fill(255); textAlign(CENTER); text(label, width/2, y+7); 
+  rect(width*0.2, y-30, width*0.6, 60, 15); 
+  fill(255); textAlign(CENTER); textSize(width*0.045); text(label, width/2, y+8); 
 }
 
 function mouseIn(x1, x2, y1, y2) { return mouseX > x1 && mouseX < x2 && mouseY > y1 && mouseY < y2; }
 function mousePressed() { 
   if (state === "MENU") { 
-    if (mouseIn(width*0.2, width*0.8, height*0.4-25, height*0.4+25)) { if (showNextLevel) { state = "PLAY"; showNextLevel = false; } else { fullReset(); state = "PLAY"; } }
-    if (mouseIn(width*0.2, width*0.8, height*0.5-25, height*0.5+25)) state = "SHOP"; 
-    if (mouseIn(width*0.2, width*0.8, height*0.6-25, height*0.6+25)) state = "SCOREBOARD"; 
+    if (mouseIn(width*0.2, width*0.8, height*0.45-30, height*0.45+30)) { if (showNextLevel) { state = "PLAY"; showNextLevel = false; } else { fullReset(); state = "PLAY"; } }
+    if (mouseIn(width*0.2, width*0.8, height*0.55-30, height*0.55+30)) state = "SHOP"; 
+    if (mouseIn(width*0.2, width*0.8, height*0.65-30, height*0.65+30)) state = "SCOREBOARD"; 
   } else if (state === "PLAY") { 
     lane = mouseX < width/3 ? 0 : (mouseX < width*0.66 ? 1 : 2); 
   } else state = "MENU"; 
@@ -213,7 +216,7 @@ function mousePressed() {
 function sound(f, a) { let osc = new p5.Oscillator('sine'); osc.start(); osc.freq(f); osc.amp(a, 0); osc.amp(0, 0.2); setTimeout(() => osc.stop(), 200); }
 function clearStage() { obs = []; mons = []; cns = []; mags = []; gCoins = []; magT = 0; autoT = 0; magSpawned = false; autoSpawned = false; finishLine = null; coinsCount = 1; }
 function fullReset() { clearStage(); score = 0; level = 1; spd = 5.5; currentSessionGold = 0; }
-function drawFinishLine(y) { fill(255); rect(width*0.1, y, width*0.8, 20); }
+function drawFinishLine(y) { fill(255); rect(width*0.1, y, width*0.8, 40); }
 
-function drawShop() { fill(0, 240); rect(0, 0, width, height); fill(255, 215, 0); textAlign(CENTER); text("MARKET", width/2, 50); text("GERİ DÖN", width/2, height-50); }
-function drawScoreBoard() { fill(0, 180); rect(0, 0, width, height); fill(255, 215, 0); textAlign(CENTER); text("REKOR: " + highScore, width/2, height/2); }
+function drawShop() { fill(0, 240); rect(0, 0, width, height); fill(255, 215, 0); textAlign(CENTER); textSize(30); text("MARKET", width/2, 100); text("ÇOK YAKINDA...", width/2, height/2); text("GERİ DÖN", width/2, height-100); }
+function drawScoreBoard() { fill(0, 180); rect(0, 0, width, height); fill(255, 215, 0); textAlign(CENTER); textSize(30); text("EN YÜKSEK SKOR: " + highScore, width/2, height/2); text("MENÜYE DÖN", width/2, height-100); }
