@@ -12,11 +12,12 @@ var hasExtraLife = false;
 
 function setup() {
   createCanvas(windowWidth,windowHeight);
-  pX = 200;
+  pX = width / 2 ;
 }
 
 function draw() {
   background(130, 190, 230);
+  translate(width / 2 - 200, 0); //
   drawEnvironment();
   
   if (state === "MENU") drawMainMenu();
