@@ -17,8 +17,7 @@ function setup() {
 
 function draw() {
   background(130, 190, 230);
-  drawEnvironment();
-  
+  drawEnvironment();  
   if (state === "MENU") drawMainMenu();
   else if (state === "PLAY") {
     if (!paused) runGame();
