@@ -17,7 +17,6 @@ function setup() {
 
 function draw() {
   background(130, 190, 230);
-  translate(width / 2 - 200, 0); //
   drawEnvironment();
   
   if (state === "MENU") drawMainMenu();
@@ -30,13 +29,15 @@ function draw() {
 }
 
 function drawEnvironment() {
-  fill(34, 139, 34); rect(0, 0, 50, height); rect(350, 0, 50, height);
-  if (frameCount % 60 === 0) scn.push({x: random(5, 375), y: -50});
-  for (let i = scn.length - 1; i >= 0; i--) {
-    scn[i].y += spd;
-    fill(255, 150); ellipse(scn[i].x, scn[i].y, 10, 10);
-    if (scn[i].y > height) scn.splice(i, 1);
-  }
+  // Çimleri ekranın soluna ve sağına daya
+  fill(34, 139, 34);
+  rect(0, 0, width * 0.1, height); // Sol çimen (ekranın %10'u)
+  rect(width * 0.9, 0, width * 0.1, height); // Sağ çimen (ekranın %10'u)
+  
+  // Yolu kalan tüm boşluğa yay
+  fill(50, 50, 50);
+  rect(width * 0.1, 0, width * 0.8, height); 
+}
   fill(50); rect(50, 0, 300, height);
   stroke(255, 40); strokeWeight(2);
   let lOff = (frameCount * spd) % 60;
